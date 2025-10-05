@@ -64,7 +64,7 @@ class TaskObject(BaseModel):
     completedTime: Optional[datetime.datetime] = None
     tags: Optional[List[str]] = None # List of tag names
     etag: Optional[str] = None # Entity tag for caching/updates
-    
+
     @field_serializer('startDate', 'dueDate')
     def serialize_datetime(self, value: datetime.datetime, _info: GetCoreSchemaHandler) -> str:
         if value is None:
@@ -79,7 +79,7 @@ class TaskObject(BaseModel):
         # Allow arbitrary types if needed for complex nested structures from API
         # arbitrary_types_allowed = True
         pass
-    
+
     def update(self, src: "TaskObject"):
         """
         Update the current task object with values from another TaskObject.
@@ -768,7 +768,7 @@ async def ticktick_get_all(search: str) -> str:
 
     Limitations:
         - For "tasks", only uncompleted tasks are returned by default
-        - For large accounts, response size might be very large 
+        - For large accounts, response size might be very large
         - Different object types have different property structures
         - Some object types might not be available depending on the user's subscription level
         - The API might limit the number of results for performance reasons
@@ -800,12 +800,13 @@ async def ticktick_get_all(search: str) -> str:
         client = TickTickClientSingleton.get_client()
         if not client:
             raise ToolLogicError("TickTick client is not available.")
-        
+
         # Get all tasks initially treats search as case-sensitive
         search_lower = search.lower()
         client.sync()
         if search_lower == "tasks":
             all_items = _get_all_tasks_from_ticktick()
+            return format_response(all_items)
         elif search_lower == "projects":
             projects = [ { "id": client.inbox_id, "name": "Inbox" } ] + client.state['projects']
             return format_response(projects)
