@@ -34,7 +34,8 @@ class PeriodFilter(BaseModel):
         try:
             converted_dt = datetime.datetime.fromisoformat(v)
             if timezone and converted_dt.tzinfo is None:
-                 converted_dt = timezone.localize(converted_dt)
+                 # Use replace(tzinfo=) instead of localize() for ZoneInfo
+                 converted_dt = converted_dt.replace(tzinfo=timezone)
             elif not timezone and converted_dt.tzinfo is not None:
                 logging.warning(f"Timezone provided in date string '{v}' but no 'tz' parameter specified. Converting to local time.")
                 converted_dt = converted_dt.astimezone(None).replace(tzinfo=None)
@@ -44,7 +45,7 @@ class PeriodFilter(BaseModel):
                 date_only = datetime.date.fromisoformat(v)
                 dt_start_of_day = datetime.datetime.combine(date_only, datetime.time.min)
                 if timezone:
-                    return timezone.localize(dt_start_of_day)
+                    return dt_start_of_day.replace(tzinfo=timezone)
                 else:
                     return dt_start_of_day
             except ValueError:
@@ -84,8 +85,16 @@ class PeriodFilter(BaseModel):
         try:
             if 'T' in date_str:
                  try:
+                      # TickTick format: 2025-10-05T07:00:00.000+0000
+                      # Convert to standard ISO: 2025-10-05T07:00:00+00:00
                       if date_str.endswith('Z'):
                           date_str = date_str[:-1] + '+00:00'
+                      # Handle TickTick's +0000 format (no colon) by converting to +00:00
+                      if '+' in date_str and date_str[-5] != ':':
+                          # Replace +0000 with +00:00
+                          date_str = date_str[:-5] + date_str[-5:-2] + ':' + date_str[-2:]
+                      
+                      # Remove milliseconds and parse
                       dt = datetime.datetime.fromisoformat(date_str.replace(".000", ""))
                  except ValueError:
                       logging.warning(f"Could not parse task date '{date_str}' with fromisoformat, trying without offset.")
@@ -99,7 +108,8 @@ class PeriodFilter(BaseModel):
 
             # Apply filter's timezone if task date is naive
             if self.tz and dt.tzinfo is None:
-                 dt = self.tz.localize(dt)
+                 # Use replace(tzinfo=) instead of localize() for ZoneInfo
+                 dt = dt.replace(tzinfo=self.tz)
             # Convert task's timezone to filter's timezone if both exist
             elif self.tz and dt.tzinfo is not None:
                  dt = dt.astimezone(self.tz)
