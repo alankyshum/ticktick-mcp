@@ -11,7 +11,7 @@ from ticktick_mcp import config
 from ticktick_mcp.mcp_instance import mcp
 
 # TickTick Client Initialization (using the new singleton)
-from ticktick_mcp.client import TickTickClientSingleton
+from ticktick_mcp.client import TickTickClientSingleton, setup_auth
 
 # --- Tool Registration --- #
 # Import tool modules AFTER mcp instance is created.
@@ -26,6 +26,15 @@ logging.info("Tool registration complete.")
 # --- Main Execution Logic --- #
 def main():
     mcp.run(transport="stdio")
+
+def setup():
+    """
+    Interactive setup function for OAuth authentication.
+    Should be run before starting the MCP server.
+    """
+    success = setup_auth()
+    if not success:
+        sys.exit(1)
 
 # --- Script Entry Point --- #
 if __name__ == "__main__":

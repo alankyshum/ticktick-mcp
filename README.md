@@ -61,13 +61,26 @@ This server utilizes the unofficial [`ticktick-py` library](https://lazeroffmich
  TICKTICK_PASSWORD=your_ticktick_password # Your TickTick login password (or app password if enabled)
  ```
 
-3. **Authentication (First Run):** On the first run (either directly or via an MCP client), the underlying `ticktick-py` library will initiate an OAuth2 authentication flow.
-    * A web browser window might open automatically, or a URL will be printed in the console/log output.
-    * You need to visit this URL, log in to TickTick if necessary, and authorize the application (granting Read and Write permissions).
-    * After authorization, you will be redirected to the `TICKTICK_REDIRECT_URI` you specified. 
-      * The console will prompt you to **paste this full redirected URL** (which includes a `code=` parameter) back into the terminal.
-    * Upon successful verification, a `.token-oauth` file will be created in the same directory as your `.env` file. 
-    * This file caches the authorization token, so you typically only need to perform this manual authorization step once every ~6 months or if the token becomes invalid.
+3. **Initial Authentication:** Before using the MCP server, you need to complete the OAuth2 authentication flow. **This must be done in a separate terminal session** because MCP servers use stdin/stdout for protocol communication.
+
+   **Run the setup command:**
+   ```bash
+   ticktick-mcp-setup
+   ```
+
+   This will:
+   * Open a web browser window automatically, or print a URL in the console
+   * Prompt you to log in to TickTick and authorize the application (granting Read and Write permissions)
+   * After authorization, you'll be redirected to your `TICKTICK_REDIRECT_URI`
+   * **The console will prompt you to paste the full redirected URL** (which includes a `code=` parameter)
+   * Upon successful verification, a `.token-oauth` file will be created in the same directory as your `.env` file
+   * This token is cached, so you typically only need to do this once every ~6 months or if the token becomes invalid
+
+   **Alternative setup method:**
+   If you don't have the `ticktick-mcp-setup` command available, you can also run:
+   ```bash
+   python -c "from ticktick_mcp.client import setup_auth; setup_auth()"
+   ```
 
 ### Running the Server
 
@@ -93,6 +106,29 @@ Configure your MCP client (like Claude Desktop, VS Code Agent Mode, etc.) to use
  }
 }
 ```
+
+## 🔧 Troubleshooting
+
+### Authentication Issues
+
+**Problem**: "The console will prompt you to paste this full redirected URL back into the terminal" but no prompt appears.
+
+**Cause**: This happens when the MCP server is running with `transport="stdio"`, which uses standard input/output for MCP protocol communication. The OAuth2 authentication flow tries to use the same streams for user input, causing a conflict.
+
+**Solution**: 
+1. **Run authentication separately first**: Use the setup command in a separate terminal:
+   ```bash
+   ticktick-mcp-setup
+   ```
+   
+2. **Alternative setup method**:
+   ```bash
+   python -c "from ticktick_mcp.client import setup_auth; setup_auth()"
+   ```
+
+3. **After authentication is complete**, the MCP server will use the cached token and work normally.
+
+**Technical Details**: The server automatically detects when it's running in an MCP context and provides a helpful error message directing you to use the setup command instead of attempting interactive authentication.
 
 ## 🔧 Tools
 

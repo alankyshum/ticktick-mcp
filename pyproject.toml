@@ -21,6 +21,7 @@ dependencies = [
 
 [project.scripts]
 ticktick-mcp = "main:main"
+ticktick-mcp-setup = "main:setup"
 
 [project.urls]
 "Homepage" = "https://github.com/jen6/ticktick-mcp"
